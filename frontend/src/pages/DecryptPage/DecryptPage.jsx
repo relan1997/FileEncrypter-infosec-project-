@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import axios from 'axios';  // Import axios
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import './DecryptPage.css'; 
 
 const DecryptPage = () => {
-  // State for file name and key
   const [filename, setFilename] = useState('');
   const [key, setKey] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate(); 
 
-  // Handle form submission
   const handleDecrypt = async (e) => {
     e.preventDefault();
 
@@ -21,21 +22,17 @@ const DecryptPage = () => {
     setMessage("");
 
     try {
-      console.log(filename,key)
-      // Make the POST request using axios
-      const response = await axios.post("http://localhost:8080/api/decryptfile", {
-        filename,
-        key
-      }, {
-        responseType: 'blob', // Important to tell axios we expect a Blob (binary data)
-      });
+      const response = await axios.post(
+        "http://localhost:8080/api/decryptfile",
+        { filename, key },
+        { responseType: 'blob' }
+      );
 
-      // If the response is successful, handle the file download
       if (response.status === 200) {
-        const downloadUrl = URL.createObjectURL(response.data); // Create a download link
+        const downloadUrl = URL.createObjectURL(response.data);
         const a = document.createElement("a");
         a.href = downloadUrl;
-        a.download = filename; // Suggest the original filename for download
+        a.download = filename;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -53,10 +50,10 @@ const DecryptPage = () => {
   };
 
   return (
-    <div>
-      <h1>Decrypt File</h1>
-      <form onSubmit={handleDecrypt}>
-        <div>
+    <div className="decrypt-page">
+      <h1 className="decrypt-title">Decrypt File</h1>
+      <form onSubmit={handleDecrypt} className="decrypt-form">
+        <div className="input-group">
           <label htmlFor="filename">Filename:</label>
           <input
             type="text"
@@ -66,8 +63,7 @@ const DecryptPage = () => {
             placeholder="Enter filename"
           />
         </div>
-
-        <div>
+        <div className="input-group">
           <label htmlFor="key">Decryption Key:</label>
           <input
             type="password"
@@ -77,13 +73,17 @@ const DecryptPage = () => {
             placeholder="Enter decryption key"
           />
         </div>
-
-        <button type="submit" disabled={isLoading}>
+        <button type="submit" disabled={isLoading} className="decrypt-button">
           {isLoading ? "Decrypting..." : "Decrypt File"}
         </button>
       </form>
+      {message && <p className="message">{message}</p>}
 
-      {message && <p>{message}</p>}
+      <div className="navigation-buttons">
+        <button className="nav-button" onClick={() => navigate('/')}>
+          Back to Home
+        </button>
+      </div>
     </div>
   );
 };

@@ -1,6 +1,6 @@
  
 
-import EncryptPage from "./pages/EncryptPage"
+import EncryptPage from "./pages/EncryptPage/EncryptPage"
 
 function App() {
 
@@ -12,3 +12,5 @@ function App() {
 }
 
 export default App
+
+

@@ -1,13 +1,4 @@
-/*project-folder/
-│
-├── package.json
-├── server.js        # Main entry point
-├── routes/          # Folder for route handlers
-├── controllers/     # Folder for business logic
-├── models/          # Folder for database models (optional)
-├── middleware/      # Folder for middleware (optional)
-└── config/          # Folder for configurations (optional)
- */
+
 import mongoose from "mongoose";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -27,7 +18,7 @@ import { EncText } from "../backend/models/encryptModel.js";
 mongoose.connect(
   "mongodb+srv://harshal:v8MiIlu9uuK0VQJ8@cluster0.u57rmde.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 );
-//const upload = multer({ dest: "uploads/" }); stores the files locally
+
 const upload = multer({ storage: multer.memoryStorage() });
 async function deriveKey(password, salt) {
   return new Promise((resolve, reject) => {
@@ -53,17 +44,15 @@ app.post("/api/uploadfile", upload.single("myFile"), async (req, res) => {
       return res.status(400).send("No file uploaded.");
     }
 
-    // Use the file buffer directly from memory
+   
     const fileBuffer = req.file.buffer;
 
-    // Generate a random salt
     const salt = crypto.randomBytes(16);
 
     // Derive the encryption key
     const key = await deriveKey(password, salt);
 
-    // Encrypt the file data
-    const iv = salt; // Using salt as IV for simplicity
+    const iv = salt; 
     const cipher = crypto.createCipheriv("aes-256-cbc", key, iv);
     const encryptedBuffer = Buffer.concat([
       cipher.update(fileBuffer),
@@ -72,10 +61,10 @@ app.post("/api/uploadfile", upload.single("myFile"), async (req, res) => {
 
     // Save encrypted file data to MongoDB
     const newFile = new EncText({
-      filename: req.file.originalname, // Store the original filename
-      mimetype: req.file.mimetype, // Store the MIME type
-      encryptedData: encryptedBuffer, // Store the encrypted data
-      salt: salt, // Store the salt separately
+      filename: req.file.originalname,
+      mimetype: req.file.mimetype,
+      encryptedData: encryptedBuffer, 
+      salt: salt, 
     });
 
     await newFile.save(); // Save the document to MongoDB
@@ -104,10 +93,10 @@ app.post("/api/decryptfile", async (req, res) => {
 
     const { encryptedData, salt, mimetype } = fileDoc;
 
-    // Derive the decryption key using the provided key and saved salt
+  
     const derivedKey = await deriveKey(key, salt);
 
-    // Decrypt the file
+    // Decryption
     const decipher = crypto.createDecipheriv("aes-256-cbc", derivedKey, salt);
     const decryptedBuffer = Buffer.concat([
       decipher.update(encryptedData),
@@ -116,10 +105,10 @@ app.post("/api/decryptfile", async (req, res) => {
 
     // Save the decrypted file to a local folder
     const outputDir = path.join(__dirname, "decrypted_files");
-    await fs.mkdir(outputDir, { recursive: true }); // Ensure the folder exists
+    await fs.mkdir(outputDir, { recursive: true }); 
     const outputFilePath = path.join(outputDir, filename);
 
-    await fs.writeFile(outputFilePath, decryptedBuffer); // Save the file locally
+    await fs.writeFile(outputFilePath, decryptedBuffer); 
 
     // Send the file for download
     res.download(outputFilePath, filename, async (err) => {
@@ -128,7 +117,7 @@ app.post("/api/decryptfile", async (req, res) => {
         res.status(500).send("Failed to send the file.");
       }
 
-      // Cleanup: Delete the file after download to avoid clutter
+      // Delete the file after download to avoid clutter
       try {
         await fs.unlink(outputFilePath);
       } catch (cleanupErr) {
