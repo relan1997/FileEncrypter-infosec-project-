@@ -22,7 +22,7 @@ const EncryptPage = () => {
     setMessage("");
 
     const formData = new FormData();
-    formData.append("file", selectedFile);
+    formData.append("myFile", selectedFile);
     formData.append("key", key);
 
     try {

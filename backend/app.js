@@ -20,20 +20,20 @@ mongoose.connect(
 );
 
 const upload = multer({ storage: multer.memoryStorage() });
-async function deriveKey(password, salt) {
-  return new Promise((resolve, reject) => {
-    crypto.pbkdf2(password, salt, 100000, 32, "sha256", (err, derivedKey) => {
-      if (err) reject(err);
-      resolve(derivedKey);
-    });
-  });
-}
+// async function deriveKey(password, salt) {
+//   return new Promise((resolve, reject) => {
+//     crypto.pbkdf2(password, salt, 100000, 32, "sha256", (err, derivedKey) => {
+//       if (err) reject(err);
+//       resolve(derivedKey);
+//     });
+//   });
+// }
 
 const readFileAsBuffer = (path) => {
   return fs.readFile(path);
 };
 
-app.post("/api/uploadfile", upload.single("myFile"), async (req, res) => {
+app.post("/api/encryptfile", upload.single("myFile"), async (req, res) => {
   try {
     const password = req.body.key; // Password for encryption
     if (!password) {
@@ -44,27 +44,28 @@ app.post("/api/uploadfile", upload.single("myFile"), async (req, res) => {
       return res.status(400).send("No file uploaded.");
     }
 
-   
     const fileBuffer = req.file.buffer;
 
-    const salt = crypto.randomBytes(16);
+    // Convert password into a buffer to use as the XOR key
+    const keyBuffer = Buffer.from(password);
 
-    // Derive the encryption key
-    const key = await deriveKey(password, salt);
+    // XOR encryption function
+    const xorCipher = (buffer, keyBuffer) => {
+      const outputBuffer = Buffer.alloc(buffer.length); // Allocate buffer for output
+      for (let i = 0; i < buffer.length; i++) {
+        outputBuffer[i] = buffer[i] ^ keyBuffer[i % keyBuffer.length]; // XOR operation
+      }
+      return outputBuffer;
+    };
 
-    const iv = salt; 
-    const cipher = crypto.createCipheriv("aes-256-cbc", key, iv);
-    const encryptedBuffer = Buffer.concat([
-      cipher.update(fileBuffer),
-      cipher.final(),
-    ]);
+    // Encrypt the file buffer using XOR
+    const encryptedBuffer = xorCipher(fileBuffer, keyBuffer);
 
     // Save encrypted file data to MongoDB
     const newFile = new EncText({
       filename: req.file.originalname,
       mimetype: req.file.mimetype,
-      encryptedData: encryptedBuffer, 
-      salt: salt, 
+      encryptedData: encryptedBuffer, // Store the encrypted buffer
     });
 
     await newFile.save(); // Save the document to MongoDB
@@ -91,24 +92,29 @@ app.post("/api/decryptfile", async (req, res) => {
       return res.status(404).send("File not found.");
     }
 
-    const { encryptedData, salt, mimetype } = fileDoc;
+    const { encryptedData, mimetype } = fileDoc;
 
-  
-    const derivedKey = await deriveKey(key, salt);
+    // Convert the key to a buffer
+    const keyBuffer = Buffer.from(key);
 
-    // Decryption
-    const decipher = crypto.createDecipheriv("aes-256-cbc", derivedKey, salt);
-    const decryptedBuffer = Buffer.concat([
-      decipher.update(encryptedData),
-      decipher.final(),
-    ]);
+    // XOR decryption function (same as encryption in XOR)
+    const xorCipher = (buffer, keyBuffer) => {
+      const outputBuffer = Buffer.alloc(buffer.length); // Allocate buffer for output
+      for (let i = 0; i < buffer.length; i++) {
+        outputBuffer[i] = buffer[i] ^ keyBuffer[i % keyBuffer.length]; // XOR operation
+      }
+      return outputBuffer;
+    };
+
+    // Decrypt the file buffer using XOR
+    const decryptedBuffer = xorCipher(encryptedData, keyBuffer);
 
     // Save the decrypted file to a local folder
     const outputDir = path.join(__dirname, "decrypted_files");
-    await fs.mkdir(outputDir, { recursive: true }); 
+    await fs.mkdir(outputDir, { recursive: true }); // Ensure directory exists
     const outputFilePath = path.join(outputDir, filename);
 
-    await fs.writeFile(outputFilePath, decryptedBuffer); 
+    await fs.writeFile(outputFilePath, decryptedBuffer); // Write decrypted file
 
     // Send the file for download
     res.download(outputFilePath, filename, async (err) => {
@@ -129,6 +135,7 @@ app.post("/api/decryptfile", async (req, res) => {
     res.status(500).send("An error occurred during decryption.");
   }
 });
+
 
 app.listen(8080, () => {
   console.log("Listening on Port 8080");
