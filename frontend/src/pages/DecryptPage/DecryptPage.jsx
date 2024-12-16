@@ -23,7 +23,7 @@ const DecryptPage = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:8080/api/decryptfile",
+        "https://fileencrypter-infosec-project.onrender.com/api/decryptfile",
         { filename, key },
         { responseType: 'blob' }
       );

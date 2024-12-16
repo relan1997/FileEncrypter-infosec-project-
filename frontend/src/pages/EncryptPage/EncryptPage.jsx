@@ -26,7 +26,7 @@ const EncryptPage = () => {
     formData.append("key", key);
 
     try {
-      const response = await axios.post("http://localhost:8080/api/encryptfile", formData);
+      const response = await axios.post("https://fileencrypter-infosec-project.onrender.com/api/encryptfile", formData);
 
       if (response.status === 200) {
         setMessage("File encrypted successfully!");
