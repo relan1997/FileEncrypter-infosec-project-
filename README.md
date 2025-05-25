@@ -51,3 +51,29 @@ npm run dev
 
 The frontend will be accessible at:
 📍 http://localhost:5173
+
+FileEncrypter-infosec-project-/
+├── backend/
+│   ├── server.js
+│   ├── routes/
+│   └── encryption.js
+├── frontend/
+│   ├── index.html
+│   ├── style.css
+│   └── script.js
+├── README.md
+└── package.json
+
+⚠️ Security Note
+This application is meant for educational purposes only. It should not be used for encrypting sensitive or critical data in real-world scenarios. For production use, ensure:
+Secure key management
+Use of HTTPS
+Stronger cryptographic practices
+
+📄 License
+This project is licensed under the MIT License. See the LICENSE file for more info.
+
+👨‍💻 Author
+Harshal Relan
+📍 Mumbai, India
+GitHub: @relan1997
